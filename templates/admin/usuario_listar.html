@@ -1,0 +1,351 @@
+<h3 class="mb-4"><i class="fas fa-users"></i> Usuários</h3>
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalUsuario">
+      <i class="fas fa-plus-circle"></i> Novo Usuário
+    </button>
+  </div>
+
+  <form class="d-flex align-items-center" method="GET" action="{{ url_for('usuario.usuario_listar') }}">
+    <input 
+      type="text" 
+      name="search" 
+      id="campo-busca" 
+      class="form-control me-2" 
+      style="width: 300px;" 
+      placeholder="Buscar usuário..." 
+      value="{{ search }}"
+    >
+    <button type="submit" id="btn-busca" class="btn btn-outline-primary" disabled>
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+      {% set columns = [
+        ('nome', 'Nome'),
+        ('email', 'Email'),
+        ('funcao', 'Função'),
+        ('ativo', 'Status')
+      ] %}
+
+      {% set current_order_by = order_by %}
+      {% set current_order_dir = order_dir %}
+
+      <tr>
+        {% macro sort_icon(column) %}
+          {% if current_order_by == column %}
+            {% if current_order_dir == 'asc' %}
+              <i class="fas fa-sort-up"></i>
+            {% else %}
+              <i class="fas fa-sort-down"></i>
+            {% endif %}
+          {% else %}
+            <i class="fas fa-sort text-muted"></i>
+          {% endif %}
+        {% endmacro %}
+
+        {% macro sort_link(label, column) %}
+          {% set new_dir = 'desc' if current_order_by == column and current_order_dir == 'asc' else 'asc' %}
+          <a href="{{ url_for('usuario.usuario_listar', order_by=column, order_dir=new_dir, search=search) }}" class="text-white text-decoration-none">
+            {{ label }} {{ sort_icon(column) }}
+          </a>
+        {% endmacro %}
+
+        {% for col, label in columns %}
+          <th>{{ sort_link(label, col) }}</th>
+        {% endfor %}
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.nome }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.funcao }}</td>
+        <td>
+          <span class="badge {{ 'bg-success' if u.ativo else 'bg-secondary' }}">{{ 'Ativo' if u.ativo else 'Inativo' }}</span>
+        </td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm btn-light editar-usuario-btn" title="Editar"
+                  data-bs-toggle="modal" data-bs-target="#modalUsuario"
+                  data-id="{{ u.id }}"
+                  data-nome="{{ u.nome }}"
+                  data-email="{{ u.email }}"
+                  data-funcao="{{ u.funcao }}"
+                  data-fabrica-id="{{ u.fabrica_id }}"
+                  data-ativo="{{ u.ativo }}">
+            <i class="fas fa-pen-to-square text-primary"></i>
+          </button>
+          <button class="btn btn-sm btn-light btn-confirmar-exclusao" title="Excluir"
+                  data-id="{{ u.id }}"
+                  data-nome="{{ u.nome }}"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modalConfirmarExclusao">
+            <i class="fas fa-trash-alt text-danger"></i>
+          </button>        
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Paginação -->
+{% if usuarios.pages > 1 %}
+<nav aria-label="Paginação">
+  <ul class="pagination justify-content-center mt-4">
+    {% if usuarios.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.prev_num, search=search, order_by=order_by, order_dir=order_dir) }}">&laquo; Anterior</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+    {% endif %}
+
+    {% for num in range(1, usuarios.pages + 1) %}
+      <li class="page-item {% if usuarios.page == num %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=num, search=search, order_by=order_by, order_dir=order_dir) }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+
+    {% if usuarios.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.next_num, search=search, order_by=order_by, order_dir=order_dir) }}">Próxima &raquo;</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+
+<!-- Modal de Cadastro/Editar Usuário -->
+<div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-usuario" action="{{ url_for('usuario.usuario_listar') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalUsuarioLabel">Cadastrar Novo Usuário</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="container">
+            <div class="row g-3">
+
+              {% macro render_field(field) %}
+                <div class="col-md-6">
+                  {{ field.label(class="form-label") }}
+                  {{ field(class="form-control is-invalid" if field.errors else "form-control") }}
+                  {% for error in field.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endmacro %}
+
+              {{ render_field(form.nome) }}
+              {{ render_field(form.email) }}
+              
+              <!-- Campos de senha agrupados -->
+              <div id="senha-campos" class="row g-3">
+                <div class="col-md-6">
+                  {{ form.senha.label(class="form-label") }}
+                  {{ form.senha(class="form-control is-invalid" if form.senha.errors else "form-control") }}
+                  {% for error in form.senha.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-md-6">
+                  {{ form.confirmar_senha.label(class="form-label") }}
+                  {{ form.confirmar_senha(class="form-control is-invalid" if form.confirmar_senha.errors else "form-control") }}
+                  {% for error in form.confirmar_senha.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                {{ form.funcao.label(class="form-label") }}
+                {{ form.funcao(class="form-select is-invalid" if form.funcao.errors else "form-select") }}
+                {% for error in form.funcao.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.fabrica_id.label(class="form-label") }}
+                {% if current_user.funcao == 'master' %}
+                  {{ form.fabrica_id(class="form-select is-invalid" if form.fabrica_id.errors else "form-select") }}
+                {% else %}
+                  <select class="form-select" disabled>
+                    {% for value, label in form.fabrica_id.choices %}
+                      <option value="{{ value }}" {% if value == current_user.fabrica_id %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="hidden" name="fabrica_id" value="{{ current_user.fabrica_id }}">
+                {% endif %}
+                {% for error in form.fabrica_id.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>    
+              
+              <div class="col-md-6">
+                {{ form.ativo.label(class="form-label") }}
+                {{ form.ativo(class="form-check-input") }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-labelledby="modalConfirmarExclusaoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-excluir-usuario">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="modalConfirmarExclusaoLabel">Confirmar Exclusão</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja excluir o usuário <strong id="nome-usuario-exclusao"></strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.btn-confirmar-exclusao').forEach(botao => {
+      botao.addEventListener('click', function () {
+        const id = this.dataset.id;
+        const nome = this.dataset.nome;
+
+        document.getElementById('nome-usuario-exclusao').innerText = nome;
+        document.getElementById('form-excluir-usuario').action = `/usuario/excluir/${id}`;
+      });
+    });
+  });
+</script>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-usuario");
+    const modalTitle = document.getElementById("modalUsuarioLabel");
+    const editarBtns = document.querySelectorAll(".editar-usuario-btn");
+
+    editarBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.action = `/usuario/editar/${btn.dataset.id}`;
+        modalTitle.innerText = "Editar Usuário";
+
+        // Preenche os campos corretamente
+        form.querySelector('[name="id"]').value = btn.dataset.id;
+        form.querySelector('[name="nome"]').value = btn.dataset.nome;
+        form.querySelector('[name="email"]').value = btn.dataset.email;
+        form.querySelector('[name="funcao"]').value = btn.dataset.funcao;
+
+        // Preenchimento correto do select fábrica
+        form.querySelector('[name="fabrica_id"]').value = btn.dataset.fabricaId;
+
+        // Preenchimento correto do campo ativo (booleano)
+        const ativoSelect = form.querySelector('[name="ativo"]');
+        if (ativoSelect.tagName === "SELECT") {
+          ativoSelect.value = btn.dataset.ativo === "True" ? "y" : "n";
+        } else {
+          ativoSelect.checked = btn.dataset.ativo === "True";
+        }
+      });
+    });
+
+    document.getElementById("modalUsuario").addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      form.action = "/admin/usuario/novo";
+      modalTitle.innerText = "Cadastrar Novo Usuário";
+    });
+  });
+</script>
+
+
+<!-- Script para controlar visibilidade dos campos de senha -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-usuario");
+    const modalTitle = document.getElementById("modalUsuarioLabel");
+    const editarBtns = document.querySelectorAll(".editar-usuario-btn");
+    const senhaCampos = document.getElementById("senha-campos");
+
+    editarBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.action = `/usuario/editar/${btn.dataset.id}`;
+        modalTitle.innerText = "Editar Usuário";
+
+        form.nome.value = btn.dataset.nome;
+        form.email.value = btn.dataset.email;
+        form.funcao.value = btn.dataset.funcao;
+        form.fabrica_id.value = btn.dataset.fabricaId;
+        form.ativo.checked = btn.dataset.ativo === "True";
+
+        senhaCampos.style.display = "none"; // Oculta campos de senha
+      });
+    });
+
+    document.getElementById("modalUsuario").addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      form.action = "/usuario";
+      modalTitle.innerText = "Cadastrar Novo Usuário";
+      senhaCampos.style.display = "flex"; // Mostra campos de senha novamente
+    });
+  });
+</script>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const inputBusca = document.getElementById("campo-busca");
+    const botaoBusca = document.getElementById("btn-busca");
+    function validarBusca() {
+      botaoBusca.disabled = inputBusca.value.trim().length < 3;
+    }
+    inputBusca.addEventListener("input", validarBusca);
+    validarBusca();
+
+    inputBusca.addEventListener("input", function () {
+      if (inputBusca.value.trim().length === 0) {
+        window.location.href = "{{ url_for('usuario.usuario_listar') }}";
+      }
+    });
+  });
+</script>
+
+
+{% if mostrar_modal %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+    modal.show();
+  });
+</script>
+{% endif %}

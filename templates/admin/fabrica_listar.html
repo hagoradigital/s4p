@@ -1,0 +1,337 @@
+<h3 class="mb-4"><i class="fas fa-industry"></i> Fábricas</h3>
+
+{% if request.args.get('erro') == 'nao_pode_excluir' %}
+  <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    ⚠️ Não é possível excluir a fábrica <strong>{{ request.args.get('nome', 'Selecionada') }}</strong> pois possui usuários vinculados.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+  </div>
+{% endif %}
+
+<!-- Barra de busca e botão Nova Fábrica -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalFabrica">
+      <i class="fas fa-plus-circle"></i> Nova Fábrica
+    </button>
+  </div>
+
+  <form class="d-flex align-items-center" method="GET" action="{{ url_for('fabrica.fabrica_listar') }}">
+    <input 
+      type="text" 
+      name="search" 
+      id="campo-busca" 
+      class="form-control me-2" 
+      style="width: 300px;" 
+      placeholder="Buscar fábrica..." 
+      value="{{ search }}"
+    >
+    <button type="submit" id="btn-busca" class="btn btn-outline-primary" disabled>
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+</div>
+
+<!-- Tabela de Fábricas -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+      {% set columns = [
+        ('nome', 'Nome'),
+        ('email', 'Email'),
+        ('responsavel', 'Responsável'),
+        ('celular', 'Celular'),
+        ('status', 'Status'),
+        ('tipo', 'Tipo')
+      ] %}
+
+      <tr>
+        {% macro sort_icon(column) %}
+          {% if order_by == column %}
+            {% if order_dir == 'asc' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort-down"></i>{% endif %}
+          {% else %}
+            <i class="fas fa-sort text-muted"></i>
+          {% endif %}
+        {% endmacro %}
+
+        {% macro sort_link(label, column) %}
+          {% set new_dir = 'desc' if order_by == column and order_dir == 'asc' else 'asc' %}
+          <a href="{{ url_for('fabrica.fabrica_listar', order_by=column, order_dir=new_dir, search=search) }}" class="text-white text-decoration-none">
+            {{ label }} {{ sort_icon(column) }}
+          </a>
+        {% endmacro %}
+
+        {% for col, label in columns %}<th>{{ sort_link(label, col) }}</th>{% endfor %}
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fabricas %}
+      <tr>
+        <td>{{ f.nome }}</td>
+        <td>{{ f.email }}</td>
+        <td>{{ f.responsavel }}</td>
+        <td>{{ f.celular }}</td>
+        <td><span class="badge {{ 'bg-success' if f.status == 'Ativo' else 'bg-secondary' }}">{{ f.status }}</span></td>
+        <td>{{ f.tipo }}</td>
+        <td class="text-center">
+          <!-- Botão Editar -->
+          <button type="button" class="btn btn-sm btn-light editar-fabrica-btn" title="Editar"
+                  data-bs-toggle="modal" data-bs-target="#modalFabrica"
+                  data-id="{{ f.id }}"
+                  data-nome="{{ f.nome }}"
+                  data-cnpj="{{ f.cnpj }}"
+                  data-email="{{ f.email }}"
+                  data-responsavel="{{ f.responsavel }}"
+                  data-celular="{{ f.celular }}"
+                  data-status="{{ f.status }}"
+                  data-tipo="{{ f.tipo }}"
+                  data-observacao="{{ f.observacao|default('') }}">
+            <i class="fas fa-pen-to-square text-primary"></i>
+          </button>
+
+          <!-- Botão Excluir -->
+          <button class="btn btn-sm btn-light btn-confirmar-exclusao" title="Excluir"
+                  data-id="{{ f.id }}"
+                  data-nome="{{ f.nome }}"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modalConfirmarExclusao">
+            <i class="fas fa-trash-alt text-danger"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+<!-- Paginação -->
+{% if fabricas.pages > 1 %}
+<nav aria-label="Paginação">
+  <ul class="pagination justify-content-center mt-4">
+    {% if fabricas.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('fabrica.fabrica_listar', page=fabricas.prev_num, search=search, order_by=order_by, order_dir=order_dir) }}">&laquo; Anterior</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+    {% endif %}
+
+    {% for num in range(1, fabricas.pages + 1) %}
+      <li class="page-item {% if fabricas.page == num %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('fabrica.fabrica_listar', page=num, search=search, order_by=order_by, order_dir=order_dir) }}">{{ num }}</a>
+      </li>
+    {% endfor %}
+
+    {% if fabricas.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{ url_for('fabrica.fabrica_listar', page=fabricas.next_num, search=search, order_by=order_by, order_dir=order_dir) }}">Próxima &raquo;</a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+
+<!-- Modal de Cadastro/Editar Fábrica -->
+<div class="modal fade" id="modalFabrica" tabindex="-1" aria-labelledby="modalFabricaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-fabrica" action="{{ url_for('fabrica.fabrica_listar') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalFabricaLabel">Cadastrar Nova Fábrica</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="container">
+            <div class="row g-3">
+
+              {% macro render_field(field) %}
+                <div class="col-md-6">
+                  {{ field.label(class="form-label") }}
+                  {{ field(class="form-control is-invalid" if field.errors else "form-control") }}
+                  {% for error in field.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endmacro %}
+
+              {{ render_field(form.nome) }}
+              {{ render_field(form.cnpj) }}
+              {{ render_field(form.email) }}
+              {{ render_field(form.responsavel) }}
+              {{ render_field(form.celular) }}
+
+              <div class="col-md-6">
+                {{ form.status.label(class="form-label") }}
+                {{ form.status(class="form-select is-invalid" if form.status.errors else "form-select") }}
+                {% for error in form.status.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.tipo.label(class="form-label") }}
+                {{ form.tipo(class="form-select is-invalid" if form.tipo.errors else "form-select") }}
+                {% for error in form.tipo.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="col-md-12">
+                {{ form.observacao.label(class="form-label") }}
+                {{ form.observacao(class="form-control is-invalid" if form.observacao.errors else "form-control", rows=2) }}
+                {% for error in form.observacao.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-labelledby="modalConfirmarExclusaoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-excluir-fabrica">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="modalConfirmarExclusaoLabel">Confirmar Exclusão</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja excluir a fábrica <strong id="nome-fabrica-exclusao"></strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const botaoBusca = document.getElementById("btn-busca");
+    const campoBusca = document.getElementById("campo-busca");
+    botaoBusca.disabled = campoBusca.value.trim().length < 3;
+    campoBusca.addEventListener("input", function () {
+      botaoBusca.disabled = campoBusca.value.trim().length < 3;
+      if (campoBusca.value.trim().length === 0) {
+        window.location.href = "{{ url_for('fabrica.fabrica_listar') }}";
+      }
+    });
+
+    document.querySelectorAll('.btn-confirmar-exclusao').forEach(botao => {
+      botao.addEventListener('click', () => {
+        const id = botao.dataset.id;
+        const nome = botao.dataset.nome;
+        document.getElementById('nome-fabrica-exclusao').innerText = nome;
+        document.getElementById('form-excluir-fabrica').action = `/fabrica/excluir/${id}`;
+      });
+    });  
+    
+    {% if mostrar_modal %}
+    const modal = new bootstrap.Modal(document.getElementById('modalFabrica'));
+    modal.show();
+    {% endif %}
+
+    {% if mostrar_modal == 'editar' %}
+    const form = document.getElementById("form-fabrica");
+    form.action = "/admin/fabrica/editar/{{ id_edicao }}";
+    document.getElementById("modalFabricaLabel").innerText = "Editar Fábrica";
+    {% endif %}
+  });
+</script>
+
+
+<!-- Scripts Gerais -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const inputBusca = document.getElementById("campo-busca");
+    const botaoBusca = document.getElementById("btn-busca");
+    function validarBusca() {
+      botaoBusca.disabled = inputBusca.value.trim().length < 3;
+    }
+    inputBusca.addEventListener("input", validarBusca);
+    validarBusca();
+    inputBusca.addEventListener("input", function () {
+      if (inputBusca.value.trim().length === 0) {
+        window.location.href = "{{ url_for('fabrica.fabrica_listar') }}";
+      }
+    });
+  });
+</script>
+
+<!-- Inclui VMasker -->
+<script src="https://unpkg.com/vanilla-masker/build/vanilla-masker.min.js"></script>
+
+<!-- Script: Preencher Modal de Edição de Fábrica -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-fabrica");
+    const modalTitle = document.getElementById("modalFabricaLabel");
+    const editarBtns = document.querySelectorAll(".editar-fabrica-btn");
+
+    VMasker(form.cnpj).maskPattern("99.999.999/9999-99");
+    VMasker(form.celular).maskPattern("(99) 99999-9999");
+
+    editarBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.action = `/fabrica/editar/${btn.dataset.id}`;
+        modalTitle.innerText = "Editar Fábrica";
+        form.nome.value = btn.dataset.nome;
+        form.cnpj.value = btn.dataset.cnpj;
+        form.email.value = btn.dataset.email;
+        form.responsavel.value = btn.dataset.responsavel;
+        form.celular.value = btn.dataset.celular;
+        form.status.value = btn.dataset.status;
+        form.tipo.value = btn.dataset.tipo;
+        form.observacao.value = btn.dataset.observacao || "";
+      });
+    });
+
+    document.getElementById("modalFabrica").addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      form.action = "/admin/fabrica/nova";
+      modalTitle.innerText = "Cadastrar Nova Fábrica";
+    });
+  });
+</script>
+
+
+<!-- Script: Exibir Modal ao Enviar Formulário com Erro -->
+{% if mostrar_modal %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = new bootstrap.Modal(document.getElementById('modalFabrica'));
+    modal.show();
+  });
+</script>
+{% endif %}
+
+<!-- Script: Exibir Modal ao Editar Fábrica -->
+{% if mostrar_modal == 'editar' %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = new bootstrap.Modal(document.getElementById('modalFabrica'));
+    const form = document.getElementById("form-fabrica");
+    form.action = "/admin/fabrica/editar/{{ id_edicao }}";
+    document.getElementById("modalFabricaLabel").innerText = "Editar Fábrica";
+    modal.show();
+  });
+</script>
+{% endif %}

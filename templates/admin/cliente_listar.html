@@ -1,0 +1,376 @@
+<h3 class="mb-4"><i class="fas fa-user-friends"></i> Clientes</h3>
+
+<!-- Botão Novo Cliente e Campo de Busca -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalCliente">
+      <i class="fas fa-plus-circle"></i> Novo Cliente
+    </button>
+  </div>
+  <form class="d-flex align-items-center" method="GET" action="{{ url_for('cliente.cliente_listar') }}">
+    <input 
+      type="text" 
+      name="search" 
+      id="campo-busca" 
+      class="form-control me-2" 
+      style="width: 300px;" 
+      placeholder="Buscar cliente..." 
+      value="{{ search }}">
+    <button type="submit" id="btn-busca" class="btn btn-outline-primary" disabled>
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+</div>
+
+<!-- Tabela de Clientes -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+      <tr>
+        {% if current_user.is_master() %}
+        <th>Fábrica</th>
+        {% endif %}
+        <th>Nome</th>
+        <th>Cidade</th>
+        <th>Estado</th>
+        <th>Telefone</th>
+        <th>Email</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clientes %}
+      <tr>
+        {% if current_user.is_master() %}
+        <td>{{ c.fabrica.nome }}</td>
+        {% endif %}
+        <td>{{ c.nome }}</td>
+        <td>{{ c.cidade }}</td>
+        <td>{{ c.uf }}</td>
+        <td>{{ c.telefone }}</td>
+        <td>{{ c.email }}</td>
+        <td class="text-center">
+          <!-- Botão Editar -->
+          <button type="button" class="btn btn-sm btn-light editar-cliente-btn" title="Editar"
+                  data-bs-toggle="modal" data-bs-target="#modalCliente"
+                  data-id="{{ c.id }}"
+                  data-nome="{{ c.nome }}"
+                  data-endereco="{{ c.endereco }}"
+                  data-numero="{{ c.numero }}"
+                  data-complemento="{{ c.complemento }}"
+                  data-cidade="{{ c.cidade }}"
+                  data-uf="{{ c.uf }}"
+                  data-cep="{{ c.cep }}"
+                  data-cnpj="{{ c.cnpj }}"
+                  data-responsavel="{{ c.responsavel }}"
+                  data-cpf="{{ c.cpf }}"
+                  data-celular="{{ c.celular }}"
+                  data-telefone="{{ c.telefone }}"
+                  data-email="{{ c.email }}">
+            <i class="fas fa-pen text-primary"></i>
+          </button>
+          <!-- Botão Excluir -->
+          <button class="btn btn-sm btn-light btn-confirmar-exclusao" title="Excluir"
+                  data-id="{{ c.id }}"
+                  data-nome="{{ c.nome }}"
+                  data-bs-toggle="modal" data-bs-target="#modalConfirmarExclusao">
+            <i class="fas fa-trash-alt text-danger"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Paginação -->
+{% if clientes.pages > 1 %}
+<nav aria-label="Paginar">
+  <ul class="pagination justify-content-center mt-4">
+    {% if clientes.has_prev %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('cliente.cliente_listar', page=clientes.prev_num, search=search) }}">&laquo; Anterior</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
+    {% endif %}
+
+    {% for num in range(1, clientes.pages + 1) %}
+    <li class="page-item {% if clientes.page == num %}active{% endif %}">
+      <a class="page-link" href="{{ url_for('cliente.cliente_listar', page=num, search=search) }}">{{ num }}</a>
+    </li>
+    {% endfor %}
+
+    {% if clientes.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="{{ url_for('cliente.cliente_listar', page=clientes.next_num, search=search) }}">Próxima &raquo;</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<!-- Scripts Gerais -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const inputBusca = document.getElementById("campo-busca");
+    const botaoBusca = document.getElementById("btn-busca");
+    function validarBusca() {
+      botaoBusca.disabled = inputBusca.value.trim().length < 3;
+    }
+    inputBusca.addEventListener("input", validarBusca);
+    validarBusca();
+    inputBusca.addEventListener("input", function () {
+      if (inputBusca.value.trim().length === 0) {
+        window.location.href = "{{ url_for('cliente.cliente_listar') }}";
+      }
+    });
+  });
+</script>
+
+<!-- Modal Cliente (Cadastro/Edição) -->
+<div class="modal fade" id="modalCliente" tabindex="-1" aria-labelledby="modalClienteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-cliente" action="{{ url_for('cliente.cliente_listar') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalClienteLabel">Cadastrar Novo Cliente</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="container">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                {{ form.nome.label(class="form-label") }}
+                {{ form.nome(class="form-control") }}
+              </div>
+              <div class="col-md-3">
+                {{ form.cnpj.label(class="form-label") }}
+                {{ form.cnpj(class="form-control", id="cnpj") }}
+              </div>
+              <div class="col-md-3">
+                {{ form.cpf.label(class="form-label") }}
+                {{ form.cpf(class="form-control", id="cpf") }}
+              </div>
+
+              <div class="col-md-3">
+                {{ form.cep.label(class="form-label") }}
+                {{ form.cep(class="form-control", id="cep") }}
+              </div>
+              <div class="col-md-6">
+                {{ form.endereco.label(class="form-label") }}
+                {{ form.endereco(class="form-control") }}
+              </div>
+              <div class="col-md-3">
+                {{ form.numero.label(class="form-label") }}
+                {{ form.numero(class="form-control") }}
+              </div>
+
+              <div class="col-md-4">
+                {{ form.complemento.label(class="form-label") }}
+                {{ form.complemento(class="form-control") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.cidade.label(class="form-label") }}
+                {{ form.cidade(class="form-control") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.uf.label(class="form-label") }}
+                {{ form.uf(class="form-control") }}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.email.label(class="form-label") }}
+                {{ form.email(class="form-control is-invalid" if form.email.errors else "form-control") }}
+                {% for error in form.email.errors %}
+                  <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <div class="col-md-3">
+                {{ form.telefone.label(class="form-label") }}
+                {{ form.telefone(class="form-control", id="telefone") }}
+              </div>
+              <div class="col-md-3">
+                {{ form.celular.label(class="form-label") }}
+                {{ form.celular(class="form-control", id="celular") }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Máscaras e preenchimento automático -->
+<script src="https://unpkg.com/vanilla-masker/build/vanilla-masker.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const cnpj = document.getElementById("cnpj");
+    const cpf = document.getElementById("cpf");
+    const celular = document.getElementById("celular");
+    const telefone = document.getElementById("telefone");
+    const cep = document.getElementById("cep");
+
+    if (cnpj) VMasker(cnpj).maskPattern("99.999.999/9999-99");
+    if (cpf) VMasker(cpf).maskPattern("999.999.999-99");
+    if (celular) VMasker(celular).maskPattern("(99) 99999-9999");
+    if (telefone) VMasker(telefone).maskPattern("(99) 9999-9999");
+    if (cep) VMasker(cep).maskPattern("99999-999");
+
+    if (cep) {
+      cep.addEventListener("blur", async function () {
+        const cepVal = cep.value.replace(/\D/g, "");
+        if (cepVal.length === 8) {
+          try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepVal}/json/`);
+            const data = await response.json();
+            if (!data.erro) {
+              document.getElementById("form-cliente").cidade.value = data.localidade;
+              document.getElementById("form-cliente").uf.value = data.uf;
+              document.getElementById("form-cliente").endereco.value = data.logradouro;
+              document.getElementById("form-cliente").complemento.value = data.complemento;
+              document.getElementById("form-cliente").numero.focus();
+            }
+          } catch (error) {
+            console.error("Erro ao buscar o CEP:", error);
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-labelledby="modalConfirmarExclusaoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-excluir-cliente">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="modalConfirmarExclusaoLabel">Confirmar Exclusão</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja excluir o cliente <strong id="nome-cliente-exclusao"></strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Script para preencher o modal de edição -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-cliente");
+    const modalTitle = document.getElementById("modalClienteLabel");
+    const editarBtns = document.querySelectorAll(".editar-cliente-btn");
+
+    editarBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        console.log("Valor do CPF carregado:", btn.dataset.cpf);
+        console.log("Valor do CNPJ carregado:", btn.dataset.cnpj);
+        form.action = `/cliente/editar/${btn.dataset.id}`;
+        modalTitle.innerText = "Editar Cliente";
+        form.nome.value = btn.dataset.nome;
+        form.cnpj.value = btn.dataset.cnpj;
+        form.cpf.value = btn.dataset.cpf;
+        form.email.value = btn.dataset.email;
+        form.celular.value = btn.dataset.celular;
+        form.telefone.value = btn.dataset.telefone;
+        form.cep.value = btn.dataset.cep;
+        form.endereco.value = btn.dataset.endereco;
+        form.numero.value = btn.dataset.numero;
+        form.complemento.value = btn.dataset.complemento;
+        form.cidade.value = btn.dataset.cidade;
+        form.uf.value = btn.dataset.uf;
+        form.responsavel.value = btn.dataset.responsavel;
+      });
+    });
+
+    document.getElementById("modalCliente").addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      form.action = "/cliente/nova";
+      modalTitle.innerText = "Cadastrar Novo Cliente";
+    });
+  });
+</script>
+
+<!-- Script para configurar o modal de exclusão -->
+<script>
+  document.querySelectorAll('.btn-confirmar-exclusao').forEach(botao => {
+    botao.addEventListener('click', () => {
+      const id = botao.dataset.id;
+      const nome = botao.dataset.nome;
+      document.getElementById('nome-cliente-exclusao').innerText = nome;
+      document.getElementById('form-excluir-cliente').action = `/cliente/excluir/${id}`;
+    });
+  });
+</script>
+
+<!-- Script: CEP e máscara -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const cepInput = document.getElementById("cep");
+    const numeroInput = document.getElementById("numero");
+
+    if (cepInput) {
+      VMasker(cepInput).maskPattern("99999-999");
+
+      cepInput.addEventListener("blur", async () => {
+        const cep = cepInput.value.replace(/\D/g, "");
+        if (cep.length === 8) {
+          try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+
+            if (!data.erro) {
+              document.getElementById("endereco").value = data.logradouro || "";
+              document.getElementById("complemento").value = data.complemento || "";
+              document.getElementById("cidade").value = data.localidade || "";
+              document.getElementById("uf").value = data.uf || "";
+              numeroInput?.focus();
+            }
+          } catch (error) {
+            console.error("Erro ao buscar CEP:", error);
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Script: Exibir Modal ao Enviar Formulário com Erro -->
+{% if mostrar_modal %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = new bootstrap.Modal(document.getElementById('modalCliente'));
+    modal.show();
+  });
+</script>
+{% endif %}
+
+<!-- Script: Exibir Modal ao Editar Cliente -->
+{% if mostrar_modal == 'editar' %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = new bootstrap.Modal(document.getElementById('modalCliente'));
+    const form = document.getElementById("form-cliente");
+    form.action = "/cliente/editar/{{ id_edicao }}";
+    document.getElementById("modalClienteLabel").innerText = "Editar Cliente";
+    modal.show();
+  });
+</script>
+{% endif %}
