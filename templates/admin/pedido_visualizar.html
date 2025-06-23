@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedido Nº {{ pedido.numero }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+            color: #000;
+        }
+        .btn-print {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #198754;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .btn-print:hover {
+            background-color: #146c43;
+        }
+        .header {
+            border: 1px solid #333;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header img {
+            height: 60px;
+        }
+        .header .empresa {
+            flex-grow: 1;
+            padding: 0 10px;
+        }
+        .header .empresa h2 {
+            margin: 0;
+            font-size: 14px;
+        }
+        .header .empresa p {
+            margin: 2px 0;
+            font-size: 11px;
+        }
+        .header .pedido {
+            text-align: center;
+            min-width: 100px;
+        }
+        .header .pedido span {
+            font-size: 11px;
+        }
+        .header .pedido h1 {
+            margin: 2px 0 0 0;
+            font-size: 20px;
+        }
+        .cliente-info {
+            border: 1px solid #333;
+            padding: 6px;
+            margin-top: 8px;
+            font-size: 11px;
+        }
+        .cliente-info td {
+            padding: 2px 6px;
+            vertical-align: top;
+        }
+        .cliente-info .label {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #eee;
+        }
+        .totais {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .totais td {
+            padding: 6px;
+        }
+        .right {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 🔸 Botão imprimir -->
+    <a href="#" class="btn-print" onclick="window.print()">
+        🖨️ Imprimir Pedido
+    </a>
+
+    <!-- 🔸 Cabeçalho -->
+    <div class="header">
+        <div>
+            <img src="{{ url_for('static', filename='img/logo_HD.png') }}" alt="Logo">
+        </div>
+        <div class="empresa">
+            <h2>HD Roupas Personalizadas</h2>
+            <p>Rod. Baldicero Filomeno, Nº 995</p>
+            <p>Ribeirão da Ilha, Florianópolis - SC</p>
+            <p>Tel.: (49) 98484-0587 / (48) 98435-9779</p>
+            <p>hagoradigital@gmail.com | 42.152.784/0001-13</p>
+        </div>
+        <div class="pedido">
+            <span><strong>PEDIDO</strong></span>
+            <h1>{{ pedido.numero }}</h1>
+        </div>
+    </div>
+
+    <!-- 🔸 Dados do cliente -->
+    <table class="cliente-info">
+        <tr>
+            <td class="label">Cliente:</td>
+            <td>{{ pedido.cliente.nome }}</td>
+            <td class="label">Tel.:</td>
+            <td>{{ pedido.cliente.telefone }}</td>
+        </tr>
+        <tr>
+            <td class="label">Email:</td>
+            <td>{{ pedido.cliente.email }}</td>
+            <td class="label">CPF:</td>
+            <td>{{ pedido.cliente.cpf or '' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Endereço:</td>
+            <td colspan="3">
+                {{ pedido.cliente.endereco }}
+            </td>
+        </tr>
+    </table>
+
+    <!-- 🔸 Itens -->
+    <table>
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th class="right">Quantidade</th>
+                <th class="right">Valor Unitário</th>
+                <th class="right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pedido.itens %}
+                <tr>
+                    <td>{{ item.produto.nome }} - TAM: {{ item.produto.tamanho.descricao }} - COR: {{ item.produto.cor.descricao }}</td>
+                    <td class="right">{{ item.quantidade }}</td>
+                    <td class="right">{{ item.produto.valor_venda | moeda }}</td>
+                    <td class="right">{{ (item.quantidade * (item.produto.valor_venda or 0)) | moeda }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 🔸 Totais -->
+    <table class="totais">
+        <tr>
+            <td class="right"><strong>Subtotal:</strong></td>
+            <td class="right" style="width: 120px;">{{ total_itens | moeda }}</td>
+        </tr>
+        <tr>
+            <td class="right"><strong>Frete:</strong></td>
+            <td class="right">{{ pedido.valor_frete | moeda }}</td>
+        </tr>
+        <tr>
+            <td class="right"><strong>Total Geral:</strong></td>
+            <td class="right">{{ total_geral | moeda }}</td>
+        </tr>
+    </table>
+
+</body>
+</html>

@@ -1,29 +1,21 @@
-# CRIA TODAS AS TABELAS E POPULA COM DADOS INICIAIS
+# POPULA AS TABELAS COM DADOS INICIAIS
 
 from app import create_app
 from extensions import db
-from models.fabrica import Fabrica
-from models.usuario import Usuario, RoleType
-from models.cliente import Cliente
-from models.tipo_vestuario import TipoVestuario
-from models.produto import Produto
-from models.estoque import Estoque
-from models.tamanho import Tamanho
-from models.cor import Cor
+from models import (
+    Fabrica, Usuario, Cliente, Produto, ProdutoEstoque,
+    TipoVestuario, Tamanho, Cor, Pedido, RoleType
+)
 
 app = create_app()
 
 with app.app_context():
-    confirm = input("⚠️ Isso irá apagar o banco atual. Deseja continuar? (s/n): ")
-    if confirm.lower() == 's':
-        db.drop_all()
-        db.create_all()
-        print("✔️ Banco resetado.")
-    else:
-        print("❌ Operação cancelada.")
-        exit()
+    print("🚀 Iniciando a população de dados...")
 
-    print("✔️ Tabelas criadas:", db.inspect(db.engine).get_table_names())
+    # ✅ Verificar se já existem fábricas para não duplicar
+    if Fabrica.query.first():
+        print("⚠️ Banco já possui dados. Abortando população para evitar duplicação.")
+        exit()
 
     # ✅ Fábricas
     f1 = Fabrica(
@@ -63,9 +55,9 @@ with app.app_context():
 
     # ✅ Tipos de vestuário
     tipos = [
-        TipoVestuario(nome="Camiseta", fabrica_id=f2.id),
-        TipoVestuario(nome="Moletom", fabrica_id=f2.id),
-        TipoVestuario(nome="Uniforme", fabrica_id=f2.id),
+        TipoVestuario(nome="Camiseta", fabrica_id=f1.id),
+        TipoVestuario(nome="Moletom", fabrica_id=f1.id),
+        TipoVestuario(nome="Uniforme", fabrica_id=f1.id),
         TipoVestuario(nome="Avental", fabrica_id=f3.id)
     ]
     db.session.add_all(tipos)
@@ -117,7 +109,7 @@ with app.app_context():
     ]
 
     for u in usuarios:
-        u.set_senha("123")
+        u.set_senha("123456")
 
     db.session.add_all(usuarios)
     db.session.commit()
@@ -125,23 +117,11 @@ with app.app_context():
     print("✅ Usuários cadastrados.")
 
     # ✅ Produtos com saldo inicial
-    tamanho_m = next(t for t in tamanhos if t.descricao == "M")
-    tamanho_g = next(t for t in tamanhos if t.descricao == "G")
-    cor_branco = next(c for c in cores if c.descricao == "Branco")
-    cor_azul = next(c for c in cores if c.descricao == "Azul")
-
     produtos = [
-        Produto(nome="Camiseta Branca M", tipo_id=tipos[0].id, tamanho_id=tamanho_m.id, cor_id=cor_branco.id,
-                fabrica_id=f2.id, saldo_estoque=100, valor_compra=10.0, valor_venda=30.0, status="ativo"),
-
-        Produto(nome="Moletom Azul G", tipo_id=tipos[1].id, tamanho_id=tamanho_g.id, cor_id=cor_azul.id,
-                fabrica_id=f2.id, saldo_estoque=50, valor_compra=20.0, valor_venda=60.0, status="ativo"),
-
-        Produto(nome="Uniforme Técnico G", tipo_id=tipos[2].id, tamanho_id=tamanho_g.id, cor_id=cor_azul.id,
-                fabrica_id=f2.id, saldo_estoque=30, valor_compra=15.0, valor_venda=45.0, status="ativo"),
-
-        Produto(nome="Avental Branco M", tipo_id=tipos[3].id, tamanho_id=tamanho_m.id, cor_id=cor_branco.id,
-                fabrica_id=f3.id, saldo_estoque=20, valor_compra=12.0, valor_venda=35.0, status="ativo")
+        Produto(nome="Camiseta Branca", tipo_id=tipos[0].id, fabrica_id=f1.id, saldo_estoque=100),
+        Produto(nome="Moletom Azul", tipo_id=tipos[1].id, fabrica_id=f1.id, saldo_estoque=50),
+        Produto(nome="Uniforme Técnico", tipo_id=tipos[2].id, fabrica_id=f1.id, saldo_estoque=30),
+        Produto(nome="Avental Branco", tipo_id=tipos[3].id, fabrica_id=f3.id, saldo_estoque=20)
     ]
 
     db.session.add_all(produtos)
@@ -150,16 +130,20 @@ with app.app_context():
     print("✅ Produtos cadastrados com saldo inicial.")
 
     # ✅ Registrar entrada inicial no estoque
+    tamanho_m = next(t for t in tamanhos if t.descricao == "M")
+    cor_branco = next(c for c in cores if c.descricao == "Branco")
+    cor_azul = next(c for c in cores if c.descricao == "Azul")
+
     movimentos = []
     for p in produtos:
-        movimento = Estoque(
+        movimento = ProdutoEstoque(
             produto_id=p.id,
+            tamanho_id=tamanho_m.id,
+            cor_id=cor_branco.id if "Branca" in p.nome or "Avental" in p.nome else cor_azul.id,
             quantidade=p.saldo_estoque,
             tipo_movimento="entrada",
             status_estoque="Estoque",
-            usuario_id=usuarios[0].id,
-            fabrica_id=p.fabrica_id,
-            local_compra="Estoque inicial"
+            usuario_id=usuarios[0].id
         )
         movimentos.append(movimento)
 
@@ -168,4 +152,4 @@ with app.app_context():
 
     print("✅ Movimentos de estoque registrados.")
 
-    print("🎯 Banco criado com sucesso e pronto para uso.")
+    print("🎯 População concluída com sucesso.")

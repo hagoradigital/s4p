@@ -1,0 +1,152 @@
+<h3 class="mb-4"><i class="fas fa-clipboard-list"></i> Controle de Pedidos</h3>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNovoPedido" onclick="resetFormPedido()">
+    <i class="fas fa-plus-circle"></i> Registrar Pedido
+  </button>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-bordered table-hover bg-white shadow-sm">
+    <thead class="table-dark">
+      <tr>
+        <th>Número</th>
+        <th>Cliente</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Valor Itens</th>
+        <th>Frete</th>
+        <th>Responsável</th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pedidos %}
+      <tr>
+        <td>{{ p.numero }}</td>
+        <td>{{ p.cliente.nome }}</td>
+        <td>{{ p.data.strftime('%d/%m/%Y') }}</td>
+        <td>
+          {% if p.status == 'Em Análise' %}
+            <span class="badge bg-warning text-dark">Em Análise</span>
+          {% elif p.status == 'Aprovado' %}
+            <span class="badge bg-success">Aprovado</span>
+          {% elif p.status == 'Recusado' %}
+            <span class="badge bg-danger">Recusado</span>
+          {% endif %}
+        </td>
+        <td>{{ valores_itens.get(p.id, 0) | moeda }}</td>
+        <td>{{ p.valor_frete | moeda }}</td>
+        <td>{{ p.usuario.nome }}</td>
+        <td class="text-center">
+          <div class="d-flex justify-content-center gap-1 flex-wrap">
+            <form method="POST" action="{{ url_for('pedido.pedido_excluir', id=p.id) }}" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-light" onclick="return confirm('Deseja excluir este pedido?')">
+                <i class="fas fa-trash-alt text-danger"></i>
+              </button>
+            </form>
+            <a href="{{ url_for('pedido.pedido_itens', pedido_id=p.id) }}" class="btn btn-sm btn-light">
+              <i class="fas fa-boxes text-success"></i>
+            </a>
+            <a href="{{ url_for('pedido.pedido_visualizar', pedido_id=p.id) }}" target="_blank" class="btn btn-sm btn-light">
+              <i class="fas fa-file-pdf text-danger"></i>
+            </a>
+            <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#modalEditarPedido{{ p.id }}">
+              <i class="fas fa-edit text-primary"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Modal Editar Pedido -->
+      <div class="modal fade" id="modalEditarPedido{{ p.id }}" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('pedido.pedido_editar', id=p.id) }}">
+              {{ formularios_edicao[p.id].hidden_tag() }}
+              <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Editar Pedido #{{ p.numero }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                {{ formularios_edicao[p.id].cliente_id.label(class="form-label") }}
+                {{ formularios_edicao[p.id].cliente_id(class="form-select") }}
+
+                {{ formularios_edicao[p.id].valor_frete.label(class="form-label mt-2") }}
+                {{ formularios_edicao[p.id].valor_frete(class="form-control valor-frete") }}
+
+                {{ formularios_edicao[p.id].status.label(class="form-label mt-2") }}
+                {{ formularios_edicao[p.id].status(class="form-select") }}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                {{ formularios_edicao[p.id].submit(class="btn btn-primary") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Novo Pedido -->
+<div class="modal fade" id="modalNovoPedido" tabindex="-1">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <form id="form-pedido" method="POST" action="{{ url_for('pedido.pedido_listar') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Registrar Novo Pedido</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          {{ form.cliente_id.label(class="form-label") }}
+          {{ form.cliente_id(class="form-select") }}
+
+          {{ form.valor_frete.label(class="form-label mt-2") }}
+          {{ form.valor_frete(class="form-control valor-frete") }}
+
+          {{ form.status.label(class="form-label mt-2") }}
+          {{ form.status(class="form-select") }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // ✅ Aplica a máscara de moeda dinamicamente
+    $(document).on('focus', '.valor-frete', function() {
+      $(this).mask('000.000.000,00', {reverse: true});
+    });
+
+    // 🔸 Abrir modal automaticamente se houver erro no cadastro
+    if (window.location.hash === "#modalNovoPedido") {
+      const modalNovo = new bootstrap.Modal(document.getElementById('modalNovoPedido'));
+      modalNovo.show();
+    }
+  });
+
+  function resetFormPedido() {
+    const form = document.getElementById("form-pedido");
+    if (form) {
+      form.reset();
+      const selects = form.querySelectorAll("select");
+      selects.forEach(select => {
+        select.selectedIndex = 0;
+      });
+    }
+  }
+</script>

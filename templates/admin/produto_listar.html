@@ -1,0 +1,255 @@
+<h3 class="mb-4"><i class="fas fa-box"></i> Produtos</h3>
+
+<!-- Estilo CSS personalizado para erros -->
+<style>
+  .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  .form-control.is-invalid,
+  .form-select.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+  }
+</style>
+
+<!-- Botão e Busca -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalProduto">
+      <i class="fas fa-plus-circle"></i> Novo Produto
+    </button>
+  </div>
+  <form class="d-flex align-items-center" method="GET" action="{{ url_for('produto.produto_listar') }}">
+    <input type="text" name="search" id="campo-busca" class="form-control me-2" style="width: 300px;" placeholder="Buscar produto..." value="{{ search }}">
+    <button type="submit" id="btn-busca" class="btn btn-outline-primary" disabled>
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+</div>
+
+<!-- Tabela -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+      <tr>
+        <th>Categoria</th>
+        <th>Produto</th>
+        <th>Tamanho</th>
+        <th>Cor</th>
+        <th>Status</th>
+        <th>Valor Compra</th>
+        <th>Valor Venda</th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in produtos.items %}
+      <tr>
+        <td>{{ p.tipo.nome }}</td>
+        <td>{{ p.nome }}</td>
+        <td>{{ p.tamanho.descricao }}</td>
+        <td>{{ p.cor.descricao }}</td>
+        <td>
+          <span class="badge {{ 'bg-success' if p.status.strip().lower() == 'ativo' else 'bg-danger' }}">
+            {{ p.status.capitalize() }}
+          </span>
+        </td>
+        <td>R$ {{ "{:,.2f}".format(p.valor_compra or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+        <td>R$ {{ "{:,.2f}".format(p.valor_venda or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm btn-light editar-produto-btn" title="Editar"
+            data-bs-toggle="modal" data-bs-target="#modalProduto"
+            data-id="{{ p.id }}" data-nome="{{ p.nome }}" data-tipo="{{ p.tipo_id }}"
+            data-tamanho="{{ p.tamanho_id }}" data-cor="{{ p.cor_id }}" data-descricao="{{ p.descricao or '' }}"
+            data-valor_compra="{{ '{:,.2f}'.format(p.valor_compra).replace(',', 'X').replace('.', ',').replace('X', '.') }}"
+            data-valor_venda="{{ '{:,.2f}'.format(p.valor_venda).replace(',', 'X').replace('.', ',').replace('X', '.') }}"
+            data-status="{{ p.status }}">
+            <i class="fas fa-pen-to-square text-primary"></i>
+          </button>
+
+          <button type="button" class="btn btn-sm btn-light btn-confirmar-exclusao"
+            data-id="{{ p.id }}" data-nome="{{ p.nome }}"
+            data-bs-toggle="modal" data-bs-target="#modalConfirmarExclusao">
+            <i class="fas fa-trash-alt text-danger"></i>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Produto -->
+<div class="modal fade {% if mostrar_modal %}show d-block{% endif %}" id="modalProduto" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-produto" action="{{ url_for('produto.produto_listar') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title" id="modalProdutoLabel">Cadastrar Novo Produto</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="container">
+            <div class="row g-3">
+
+              <!-- Categoria -->
+              <div class="col-md-3">
+                {{ form.tipo_id.label(class="form-label") }}
+                {{ form.tipo_id(class="form-select" + (' is-invalid' if form.tipo_id.errors else '')) }}
+                {% for error in form.tipo_id.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Nome -->
+              <div class="col-md-9">
+                {{ form.nome.label(class="form-label") }}
+                {{ form.nome(class="form-control" + (' is-invalid' if form.nome.errors else '')) }}
+                {% for error in form.nome.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Tamanho -->
+              <div class="col-md-6">
+                {{ form.tamanho_id.label(class="form-label") }}
+                {{ form.tamanho_id(class="form-select" + (' is-invalid' if form.tamanho_id.errors else '')) }}
+                {% for error in form.tamanho_id.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Cor -->
+              <div class="col-md-6">
+                {{ form.cor_id.label(class="form-label") }}
+                {{ form.cor_id(class="form-select" + (' is-invalid' if form.cor_id.errors else '')) }}
+                {% for error in form.cor_id.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Descrição -->
+              <div class="col-md-12">
+                {{ form.descricao.label(class="form-label") }}
+                {{ form.descricao(class="form-control") }}
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-4">
+                {{ form.status.label(class="form-label") }}
+                {{ form.status(class="form-select" + (' is-invalid' if form.status.errors else '')) }}
+                {% for error in form.status.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Valor Compra -->
+              <div class="col-md-4">
+                {{ form.valor_compra.label(class="form-label") }}
+                {{ form.valor_compra(class="form-control" + (' is-invalid' if form.valor_compra.errors else ''), onkeyup="mascaraMoeda(event)") }}
+                {% for error in form.valor_compra.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <!-- Valor Venda -->
+              <div class="col-md-4">
+                {{ form.valor_venda.label(class="form-label") }}
+                {{ form.valor_venda(class="form-control" + (' is-invalid' if form.valor_venda.errors else ''), onkeyup="mascaraMoeda(event)") }}
+                {% for error in form.valor_venda.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusao" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="form-excluir-produto">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Confirmar Exclusão</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          Tem certeza que deseja excluir o produto <strong id="nome-produto-exclusao"></strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("form-produto");
+    const modalTitle = document.getElementById("modalProdutoLabel");
+
+    document.querySelectorAll(".editar-produto-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        form.action = `/produto/editar/${btn.dataset.id}`;
+        modalTitle.innerText = "Editar Produto";
+        form.nome.value = btn.dataset.nome;
+        form.tipo_id.value = btn.dataset.tipo;
+        form.tamanho_id.value = btn.dataset.tamanho;
+        form.cor_id.value = btn.dataset.cor;
+        form.descricao.value = btn.dataset.descricao;
+        form.valor_compra.value = btn.dataset.valor_compra;
+        form.valor_venda.value = btn.dataset.valor_venda;
+        form.status.value = btn.dataset.status;
+      });
+    });
+
+    document.getElementById("modalProduto").addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      form.action = "/produto/";
+      modalTitle.innerText = "Cadastrar Novo Produto";
+    });
+
+    document.querySelectorAll(".btn-confirmar-exclusao").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const formExcluir = document.getElementById("form-excluir-produto");
+        formExcluir.action = `/produto/excluir/${btn.dataset.id}`;
+        document.getElementById("nome-produto-exclusao").innerText = btn.dataset.nome;
+      });
+    });
+
+    const inputBusca = document.getElementById("campo-busca");
+    const botaoBusca = document.getElementById("btn-busca");
+    inputBusca.addEventListener("input", function () {
+      botaoBusca.disabled = inputBusca.value.trim().length < 3;
+      if (inputBusca.value.trim().length === 0) {
+        window.location.href = "{{ url_for('produto.produto_listar') }}";
+      }
+    });
+  });
+
+  function mascaraMoeda(event) {
+    const onlyDigits = event.target.value.replace(/\D/g, "").replace(/^[0]+/, "");
+    const options = { minimumFractionDigits: 2 };
+    const result = new Intl.NumberFormat("pt-BR", options).format(
+      parseFloat(onlyDigits) / 100
+    );
+    event.target.value = onlyDigits.length > 0 ? result : "";
+  }
+</script>

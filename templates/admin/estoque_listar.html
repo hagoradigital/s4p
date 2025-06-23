@@ -1,0 +1,246 @@
+<h3 class="mb-4"><i class="fas fa-warehouse"></i> Controle de Estoque</h3>
+
+<!-- Botão Novo Movimento -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalMovimentoEstoque" onclick="resetFormEstoque()">
+    <i class="fas fa-plus-circle"></i> Registrar Movimento
+  </button>
+</div>
+
+<!-- Tabela de Movimentos -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover shadow-sm bg-white">
+    <thead class="table-dark">
+      <tr>
+        <th>Categoria</th>
+        <th>Produto</th>
+        <th>Qtde</th>
+        <th>Status</th>
+        <th>Movimento</th>
+        <th>Data</th>
+        <th>Valor</th>
+        <th class="text-center">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in estoque.items %}
+      <tr>
+        <td>{{ m.produto.tipo.nome }}</td>
+        <td>{{ m.produto.nome }} → 🔸TAM: {{ m.produto.tamanho.descricao }} → COR: {{ m.produto.cor.descricao }}</td>
+        <td>{{ m.quantidade }}</td>
+        <td>
+          {% if m.status_estoque == 'Comprar' %}
+            <span class="badge bg-warning text-dark">Comprar</span>
+          {% elif m.status_estoque == 'Em Trânsito' %}
+            <span class="badge bg-info text-dark">Em Trânsito</span>
+          {% else %}
+            <span class="badge bg-primary">Estoque</span>
+          {% endif %}
+        </td>
+        <td><span class="badge bg-success">Entrada</span></td>
+        <td>{{ m.data_movimento.strftime('%d/%m/%Y') }}</td>
+        <td>R$ {{ "{:,.2f}".format(m.valor_unitario or 0).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+        <td class="text-center">
+          <form method="POST" action="{{ url_for('estoque.estoque_excluir', id=m.id) }}" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-light" onclick="return confirm('Deseja excluir este registro?')">
+              <i class="fas fa-trash-alt text-danger"></i>
+            </button>
+          </form>
+          <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#modalEditarEstoque{{ m.id }}">
+            <i class="fas fa-edit text-primary"></i>
+          </button>
+        </td>
+      </tr>
+
+      <!-- Modal Editar -->
+      <div class="modal fade" id="modalEditarEstoque{{ m.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('estoque.estoque_editar', id=m.id) }}">
+              {{ formularios_edicao[m.id].hidden_tag() }}
+              <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Editar Movimento de Estoque</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="container">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].tipo_id.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].tipo_id(class="form-select", id="tipo_id_{{m.id}}") }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].cor_id.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].cor_id(class="form-select", id="cor_id_{{m.id}}") }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].produto_id.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].produto_id(class="form-select", id="produto_id_{{m.id}}") }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].status_estoque.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].status_estoque(class="form-select") }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].quantidade.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].quantidade(class="form-control", type="number", min="1") }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ formularios_edicao[m.id].valor_unitario.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].valor_unitario(class="form-control", onkeyup="mascaraMoeda(event)") }}
+                    </div>
+
+                    <div class="col-md-12">
+                      {{ formularios_edicao[m.id].local_compra.label(class="form-label") }}
+                      {{ formularios_edicao[m.id].local_compra(class="form-control") }}
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                {{ formularios_edicao[m.id].submit(class="btn btn-primary") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal Novo Movimento -->
+<div class="modal fade" id="modalMovimentoEstoque" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="form-estoque" method="POST" action="{{ url_for('estoque.estoque_novo') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Registrar Novo Movimento</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="container">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                {{ form.tipo_id.label(class="form-label") }}
+                {{ form.tipo_id(class="form-select", id="tipo_id") }}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.cor_id.label(class="form-label") }}
+                {{ form.cor_id(class="form-select", id="cor_id") }}
+              </div>
+
+              <div class="col-md-12">
+                {{ form.produto_id.label(class="form-label") }}
+                {{ form.produto_id(class="form-select", id="produto_id") }}
+              </div>
+
+              <div class="col-md-4">
+                {{ form.status_estoque.label(class="form-label") }}
+                {{ form.status_estoque(class="form-select") }}
+              </div>
+
+              <div class="col-md-4">
+                {{ form.quantidade.label(class="form-label") }}
+                {{ form.quantidade(class="form-control", type="number", min="1") }}
+              </div>
+
+              <div class="col-md-4">
+                {{ form.valor_unitario.label(class="form-label") }}
+                {{ form.valor_unitario(class="form-control", onkeyup="mascaraMoeda(event)") }}
+              </div>
+
+              <div class="col-md-12">
+                {{ form.local_compra.label(class="form-label") }}
+                {{ form.local_compra(class="form-control") }}
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function mascaraMoeda(event) {
+  const onlyDigits = event.target.value.replace(/\D/g, "").replace(/^[0]+/, "");
+  const options = { minimumFractionDigits: 2 };
+  const result = new Intl.NumberFormat("pt-BR", options).format(parseFloat(onlyDigits) / 100);
+  event.target.value = onlyDigits.length > 0 ? result : "";
+}
+
+function resetFormEstoque() {
+  const form = document.getElementById("form-estoque");
+  if (form) {
+    form.reset();
+    const produtoSelect = document.getElementById("produto_id");
+    produtoSelect.innerHTML = '<option value="">Selecione...</option>';
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const tipoSelect = document.getElementById("tipo_id");
+  const corSelect = document.getElementById("cor_id");
+  const produtoSelect = document.getElementById("produto_id");
+
+  function carregarProdutos(tipoId, corId, selectProduto) {
+    if (tipoId > 0 && corId > 0) {
+      fetch(`/api/produtos_por_tipo_e_cor/${tipoId}/${corId}`)
+        .then(res => res.json())
+        .then(data => {
+          selectProduto.innerHTML = '<option value="">Selecione...</option>';
+          data.forEach(prod => {
+            const option = document.createElement("option");
+            option.value = prod.id;
+            option.text = prod.nome;
+            selectProduto.appendChild(option);
+          });
+        });
+    } else {
+      selectProduto.innerHTML = '<option value="">Selecione...</option>';
+    }
+  }
+
+  if (tipoSelect && corSelect) {
+    tipoSelect.addEventListener("change", () => {
+      carregarProdutos(parseInt(tipoSelect.value), parseInt(corSelect.value), produtoSelect);
+    });
+
+    corSelect.addEventListener("change", () => {
+      carregarProdutos(parseInt(tipoSelect.value), parseInt(corSelect.value), produtoSelect);
+    });
+  }
+
+  document.querySelectorAll('[id^="tipo_id_"]').forEach((tipoSelect) => {
+    const id = tipoSelect.id.split('_')[2];
+    const corSelect = document.getElementById(`cor_id_${id}`);
+    const produtoSelect = document.getElementById(`produto_id_${id}`);
+
+    function carregarProdutosEdicao() {
+      carregarProdutos(parseInt(tipoSelect.value), parseInt(corSelect.value), produtoSelect);
+    }
+
+    tipoSelect.addEventListener("change", carregarProdutosEdicao);
+    corSelect.addEventListener("change", carregarProdutosEdicao);
+  });
+});
+</script>

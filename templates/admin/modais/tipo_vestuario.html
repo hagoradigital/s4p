@@ -1,0 +1,71 @@
+<div class="modal fade" id="modalTipoVestuarios" tabindex="-1" aria-labelledby="modalTipoVestuariosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered custom-modal-width">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTipoVestuariosLabel">Tipos de Vestuário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+
+        <form method="POST" action="{{ url_for('modal_tipo_vestuario.salvar_tipo_vestuario') }}">
+          {{ form_tipo.hidden_tag() }}
+          <div class="d-flex flex-wrap align-items-end mb-3">
+            <div class="flex-grow-1 me-2">
+             {{ form_tipo.nome.label(class="form-label") }}
+             {{ form_tipo.nome(class="form-control", placeholder="Digite o nome") }}
+            </div>
+            <div class="mt-auto">
+              <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+          </div>        
+        </form>
+
+        {% if tipos_vestuario %}
+        <ul class="list-group">
+          {% for tipo in tipos_vestuario %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ tipo.nome }}
+            <div>
+              <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao('{{ tipo.id }}')">Excluir</button>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">Nenhum tipo de vestuário cadastrado ainda.</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  function confirmarExclusao(id) {
+    Swal.fire({
+      title: 'Excluir Tipo de Vestuário?',
+      text: "Essa ação não poderá ser desfeita!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Cria e envia um formulário POST com CSRF
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/modal/tipo-vestuario/excluir/${id}`;
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ form_tipo.csrf_token._value() }}';
+
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    });
+  }
+</script>

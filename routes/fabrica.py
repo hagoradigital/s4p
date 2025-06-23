@@ -4,6 +4,7 @@ from extensions import db
 from forms import FabricaForm
 from models import Fabrica
 from sqlalchemy import or_, asc, desc, func
+from forms.tipo_vestuario_form import TipoVestuarioForm
 
 fabrica_bp = Blueprint("fabrica", __name__, url_prefix="/fabrica")
 

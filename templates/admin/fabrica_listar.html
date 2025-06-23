@@ -36,12 +36,12 @@
   <table class="table table-bordered table-hover shadow-sm bg-white">
     <thead class="table-dark">
       {% set columns = [
+        ('tipo', 'Negócio'),
         ('nome', 'Nome'),
         ('email', 'Email'),
         ('responsavel', 'Responsável'),
         ('celular', 'Celular'),
-        ('status', 'Status'),
-        ('tipo', 'Tipo')
+        ('status', 'Status')
       ] %}
 
       <tr>
@@ -61,18 +61,22 @@
         {% endmacro %}
 
         {% for col, label in columns %}<th>{{ sort_link(label, col) }}</th>{% endfor %}
-        <th>Ações</th>
+        <th class="text-center">Ações</th>
       </tr>
     </thead>
     <tbody>
       {% for f in fabricas %}
       <tr>
+        <td>{{ f.tipo }}</td>
         <td>{{ f.nome }}</td>
         <td>{{ f.email }}</td>
         <td>{{ f.responsavel }}</td>
         <td>{{ f.celular }}</td>
-        <td><span class="badge {{ 'bg-success' if f.status == 'Ativo' else 'bg-secondary' }}">{{ f.status }}</span></td>
-        <td>{{ f.tipo }}</td>
+        <td class="text-center">
+          <span class="badge {{ 'bg-success' if f.status == 'Ativo' else 'bg-danger' }}">
+            {{ f.status }}
+          </span>
+        </td>        
         <td class="text-center">
           <!-- Botão Editar -->
           <button type="button" class="btn btn-sm btn-light editar-fabrica-btn" title="Editar"

@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db
 from models import Usuario, Cliente, Produto, Pedido
 from forms import LoginForm
 from datetime import datetime
+from extensions import db, login_manager
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -23,6 +23,7 @@ def login():
         else:
             flash("Email ou senha inválidos", "danger")
     return render_template("index.html", form=form)
+
 
 @auth_bp.route("/dashboard")
 @login_required
@@ -52,7 +53,7 @@ def dashboard():
         total_produtos=total_produtos,
         total_pedidos_mes=total_pedidos_mes
     )
-
+    
 @auth_bp.route("/logout")
 @login_required
 def logout():
