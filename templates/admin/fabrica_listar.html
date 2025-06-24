@@ -43,11 +43,14 @@
         ('celular', 'Celular'),
         ('status', 'Status')
       ] %}
-
       <tr>
         {% macro sort_icon(column) %}
           {% if order_by == column %}
-            {% if order_dir == 'asc' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort-down"></i>{% endif %}
+            {% if order_dir == 'asc' %}
+              <i class="fas fa-sort-up"></i>
+            {% else %}
+              <i class="fas fa-sort-down"></i>
+            {% endif %}
           {% else %}
             <i class="fas fa-sort text-muted"></i>
           {% endif %}
@@ -60,12 +63,14 @@
           </a>
         {% endmacro %}
 
-        {% for col, label in columns %}<th>{{ sort_link(label, col) }}</th>{% endfor %}
+        {% for col, label in columns %}
+          <th>{{ sort_link(label, col) }}</th>
+        {% endfor %}
         <th class="text-center">Ações</th>
       </tr>
     </thead>
     <tbody>
-      {% for f in fabricas %}
+      {% for f in fabricas.items %}
       <tr>
         <td>{{ f.tipo }}</td>
         <td>{{ f.nome }}</td>
@@ -107,7 +112,6 @@
     </tbody>
   </table>
 </div>
-
 
 <!-- Paginação -->
 {% if fabricas.pages > 1 %}

@@ -29,9 +29,9 @@ with app.app_context():
     f1 = Fabrica(
         nome="HD Tecnologia Ltda",
         cnpj="12.345.678/0001-99",
-        email="contato@tec.com",
-        responsavel="João Silva",
-        celular="(48) 99999-0001",
+        email="contato@hd.com.br",
+        responsavel="Clayton Antunes",
+        celular="(48) 99958-0587",
         status="Ativo",
         tipo="Tecnologia",
         observacao="Foco em software e automação."
@@ -39,24 +39,14 @@ with app.app_context():
     f2 = Fabrica(
         nome="HD Roupas Ltda",
         cnpj="98.765.432/0001-11",
-        email="contato@roupas.com",
-        responsavel="Maria Souza",
-        celular="(48) 98888-0002",
+        email="contato@roupas.com.br",
+        responsavel="Magda Renata",
+        celular="(48) 98484-0587",
         status="Ativo",
         tipo="Roupas",
         observacao="Especializada em camisetas promocionais e uniformes."
     )
-    f3 = Fabrica(
-        nome="HD Padaria Ltda",
-        cnpj="56.789.123/0001-44",
-        email="contato@padaria.com",
-        responsavel="Carlos Lima",
-        celular="(48) 97777-0003",
-        status="Ativo",
-        tipo="Padaria",
-        observacao="Foco em panificação artesanal."
-    )
-    db.session.add_all([f1, f2, f3])
+    db.session.add_all([f1, f2])
     db.session.commit()
 
     print("✅ Fábricas cadastradas.")
@@ -66,7 +56,7 @@ with app.app_context():
         TipoVestuario(nome="Camiseta", fabrica_id=f2.id),
         TipoVestuario(nome="Moletom", fabrica_id=f2.id),
         TipoVestuario(nome="Uniforme", fabrica_id=f2.id),
-        TipoVestuario(nome="Avental", fabrica_id=f3.id)
+        TipoVestuario(nome="Avental", fabrica_id=f2.id)
     ]
     db.session.add_all(tipos)
     db.session.commit()
@@ -113,7 +103,6 @@ with app.app_context():
         Usuario(nome="RoupasAD", email="admin@roupas.com", funcao=RoleType.ADMIN, fabrica_id=f2.id),
         Usuario(nome="RoupasME", email="medio@roupas.com", funcao=RoleType.MEDIO, fabrica_id=f2.id),
 
-        Usuario(nome="PadariaAD", email="admin@padaria.com", funcao=RoleType.ADMIN, fabrica_id=f3.id),
     ]
 
     for u in usuarios:

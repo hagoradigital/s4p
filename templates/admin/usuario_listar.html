@@ -6,17 +6,9 @@
       <i class="fas fa-plus-circle"></i> Novo Usuário
     </button>
   </div>
-
   <form class="d-flex align-items-center" method="GET" action="{{ url_for('usuario.usuario_listar') }}">
-    <input 
-      type="text" 
-      name="search" 
-      id="campo-busca" 
-      class="form-control me-2" 
-      style="width: 300px;" 
-      placeholder="Buscar usuário..." 
-      value="{{ search }}"
-    >
+    <input type="text" name="search" id="campo-busca" class="form-control me-2"
+      style="width: 300px;" placeholder="Buscar usuário..." value="{{ search }}">
     <button type="submit" id="btn-busca" class="btn btn-outline-primary" disabled>
       <i class="fas fa-search"></i>
     </button>
@@ -26,69 +18,38 @@
 <div class="table-responsive">
   <table class="table table-bordered table-hover shadow-sm bg-white">
     <thead class="table-dark">
-      {% set columns = [
-        ('nome', 'Nome'),
-        ('email', 'Email'),
-        ('funcao', 'Função'),
-        ('ativo', 'Status')
-      ] %}
-
-      {% set current_order_by = order_by %}
-      {% set current_order_dir = order_dir %}
-
       <tr>
-        {% macro sort_icon(column) %}
-          {% if current_order_by == column %}
-            {% if current_order_dir == 'asc' %}
-              <i class="fas fa-sort-up"></i>
-            {% else %}
-              <i class="fas fa-sort-down"></i>
-            {% endif %}
-          {% else %}
-            <i class="fas fa-sort text-muted"></i>
-          {% endif %}
-        {% endmacro %}
-
-        {% macro sort_link(label, column) %}
-          {% set new_dir = 'desc' if current_order_by == column and current_order_dir == 'asc' else 'asc' %}
-          <a href="{{ url_for('usuario.usuario_listar', order_by=column, order_dir=new_dir, search=search) }}" class="text-white text-decoration-none">
-            {{ label }} {{ sort_icon(column) }}
-          </a>
-        {% endmacro %}
-
-        {% for col, label in columns %}
-          <th>{{ sort_link(label, col) }}</th>
-        {% endfor %}
-        <th>Ações</th>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Função</th>
+        <th>Status</th>
+        <th class="text-center">Ações</th>
       </tr>
     </thead>
     <tbody>
-      {% for u in usuarios %}
+      {% for u in usuarios.items %}
       <tr>
         <td>{{ u.nome }}</td>
         <td>{{ u.email }}</td>
         <td>{{ u.funcao }}</td>
         <td>
-          <span class="badge {{ 'bg-success' if u.ativo else 'bg-secondary' }}">{{ 'Ativo' if u.ativo else 'Inativo' }}</span>
+          <span class="badge {{ 'bg-success' if u.ativo else 'bg-secondary' }}">
+            {{ 'Ativo' if u.ativo else 'Inativo' }}
+          </span>
         </td>
         <td class="text-center">
-          <button type="button" class="btn btn-sm btn-light editar-usuario-btn" title="Editar"
-                  data-bs-toggle="modal" data-bs-target="#modalUsuario"
-                  data-id="{{ u.id }}"
-                  data-nome="{{ u.nome }}"
-                  data-email="{{ u.email }}"
-                  data-funcao="{{ u.funcao }}"
-                  data-fabrica-id="{{ u.fabrica_id }}"
-                  data-ativo="{{ u.ativo }}">
+          <button type="button" class="btn btn-sm btn-light editar-usuario-btn"
+            data-bs-toggle="modal" data-bs-target="#modalUsuario"
+            data-id="{{ u.id }}" data-nome="{{ u.nome }}" data-email="{{ u.email }}"
+            data-funcao="{{ u.funcao }}" data-fabrica-id="{{ u.fabrica_id }}"
+            data-ativo="{{ u.ativo }}">
             <i class="fas fa-pen-to-square text-primary"></i>
           </button>
-          <button class="btn btn-sm btn-light btn-confirmar-exclusao" title="Excluir"
-                  data-id="{{ u.id }}"
-                  data-nome="{{ u.nome }}"
-                  data-bs-toggle="modal"
-                  data-bs-target="#modalConfirmarExclusao">
+          <button class="btn btn-sm btn-light btn-confirmar-exclusao"
+            data-id="{{ u.id }}" data-nome="{{ u.nome }}"
+            data-bs-toggle="modal" data-bs-target="#modalConfirmarExclusao">
             <i class="fas fa-trash-alt text-danger"></i>
-          </button>        
+          </button>
         </td>
       </tr>
       {% endfor %}
@@ -96,13 +57,12 @@
   </table>
 </div>
 
-<!-- Paginação -->
 {% if usuarios.pages > 1 %}
 <nav aria-label="Paginação">
   <ul class="pagination justify-content-center mt-4">
     {% if usuarios.has_prev %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.prev_num, search=search, order_by=order_by, order_dir=order_dir) }}">&laquo; Anterior</a>
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.prev_num, search=search) }}">&laquo; Anterior</a>
       </li>
     {% else %}
       <li class="page-item disabled"><span class="page-link">&laquo; Anterior</span></li>
@@ -110,13 +70,13 @@
 
     {% for num in range(1, usuarios.pages + 1) %}
       <li class="page-item {% if usuarios.page == num %}active{% endif %}">
-        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=num, search=search, order_by=order_by, order_dir=order_dir) }}">{{ num }}</a>
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=num, search=search) }}">{{ num }}</a>
       </li>
     {% endfor %}
 
     {% if usuarios.has_next %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.next_num, search=search, order_by=order_by, order_dir=order_dir) }}">Próxima &raquo;</a>
+        <a class="page-link" href="{{ url_for('usuario.usuario_listar', page=usuarios.next_num, search=search) }}">Próxima &raquo;</a>
       </li>
     {% else %}
       <li class="page-item disabled"><span class="page-link">Próxima &raquo;</span></li>
@@ -214,11 +174,15 @@
   </div>
 </div>
 
+
 <!-- Modal de Confirmação de Exclusão -->
 <div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-labelledby="modalConfirmarExclusaoLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <form method="POST" id="form-excluir-usuario">
+        <!-- ✅ Token CSRF obrigatório -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title" id="modalConfirmarExclusaoLabel">Confirmar Exclusão</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>

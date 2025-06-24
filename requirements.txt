@@ -1,9 +1,12 @@
-Flask==3.1.1
+Flask==2.2.5
 Flask-Login==0.6.3
 Flask-WTF==1.1.1
-Flask-Babel==3.1.0
+Flask-Babel==2.0.0
+Flask-SQLAlchemy==2.5.1
+SQLAlchemy==1.4.49
 psycopg2-binary==2.9.9
 email-validator==2.1.1
 WTForms==3.1.2
 xhtml2pdf==0.2.8
 gunicorn==21.2.0
+Werkzeug==2.2.3

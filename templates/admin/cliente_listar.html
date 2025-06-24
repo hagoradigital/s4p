@@ -39,7 +39,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for c in clientes %}
+      {% for c in clientes.items %}
       <tr>
         {% if current_user.is_master() %}
         <td>{{ c.fabrica.nome }}</td>
@@ -50,7 +50,6 @@
         <td>{{ c.telefone }}</td>
         <td>{{ c.email }}</td>
         <td class="text-center">
-          <!-- Botão Editar -->
           <button type="button" class="btn btn-sm btn-light editar-cliente-btn" title="Editar"
                   data-bs-toggle="modal" data-bs-target="#modalCliente"
                   data-id="{{ c.id }}"
@@ -69,7 +68,6 @@
                   data-email="{{ c.email }}">
             <i class="fas fa-pen-to-square text-primary"></i>
           </button>
-          <!-- Botão Excluir -->
           <button class="btn btn-sm btn-light btn-confirmar-exclusao" title="Excluir"
                   data-id="{{ c.id }}"
                   data-nome="{{ c.nome }}"
@@ -111,6 +109,7 @@
   </ul>
 </nav>
 {% endif %}
+
 
 <!-- Scripts Gerais -->
 <script>
