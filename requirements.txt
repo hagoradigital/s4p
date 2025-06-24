@@ -1,3 +1,4 @@
+-e "shell:pip uninstall -y psycopg2"
 Flask==2.2.5
 Flask-Login==0.6.3
 Flask-WTF==1.1.1
