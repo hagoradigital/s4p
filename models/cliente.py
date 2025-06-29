@@ -1,7 +1,7 @@
 from extensions import db
 
 class Cliente(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String(120), nullable=False)
     endereco = db.Column(db.String(150), nullable=True)
     numero = db.Column(db.String(20), nullable=True)

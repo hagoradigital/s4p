@@ -3,7 +3,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["mailutils", "openssh", "sqlite-interactive"]
+packages = ["mailutils", "openssh", "powershell", "sqlite-interactive", "wget"]
 
 [unitTest]
 language = "python3"

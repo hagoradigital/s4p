@@ -44,6 +44,7 @@ def create_app():
     from routes.estoque import estoque_bp
     from routes.pedido import pedido_bp
     from routes.gerar_link_cliente import gerar_link_bp
+    from routes.pdf import pdf_bp
     # from routes.novo_cliente import novo_cliente_bp  # Caso você tenha essa rota ativa
 
     app.register_blueprint(auth_bp)
@@ -55,7 +56,9 @@ def create_app():
     app.register_blueprint(estoque_bp)
     app.register_blueprint(pedido_bp)
     app.register_blueprint(gerar_link_bp)
+    app.register_blueprint(pdf_bp)
     # app.register_blueprint(novo_cliente_bp)
+
 
     # 🔧 Context processor para disponibilizar formulários ou variáveis globais nos templates
     @app.context_processor

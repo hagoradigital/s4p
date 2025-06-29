@@ -2,7 +2,7 @@ from extensions import db
 from datetime import datetime
 
 class Fabrica(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String(100), nullable=False)
     cnpj = db.Column(db.String(20))
     email = db.Column(db.String(120))
