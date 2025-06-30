@@ -5,7 +5,7 @@ from sqlalchemy import Numeric
 class Produto(db.Model):
     __tablename__ = 'produto'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nome = db.Column(db.String(120), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
 

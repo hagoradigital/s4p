@@ -5,7 +5,7 @@ from datetime import datetime
 class Pedido(db.Model):
     __tablename__ = "pedido"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     fabrica_id = db.Column(db.Integer, db.ForeignKey('fabrica.id'), nullable=False)
     fabrica = db.relationship('Fabrica', backref=db.backref('pedidos', lazy=True))
 
@@ -34,7 +34,7 @@ class Pedido(db.Model):
 class PedidoItem(db.Model):
     __tablename__ = "pedido_item"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
     produto_id = db.Column(db.Integer, db.ForeignKey('produto.id'), nullable=False)
 

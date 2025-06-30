@@ -97,10 +97,16 @@
 </head>
 <body>
 
-    <!-- 🔸 Botão imprimir -->
-    <a href="#" class="btn-print" onclick="window.print()">
-        🖨️ Imprimir Pedido
-    </a>
+    <!-- 🔸 Botão de impressão (condicional por ambiente) -->
+    {% if ambiente == 'producao' %}
+        <a href="https://pdf-service.fly.dev/pedido/pdf/{{ pedido.id }}" class="btn-print" target="_blank">
+            🖨️ Imprimir Pedido (PDF)
+        </a>
+    {% else %}
+        <a href="#" class="btn-print" onclick="window.print()">
+            🖨️ Imprimir Pedido
+        </a>
+    {% endif %}
 
     <!-- 🔸 Cabeçalho -->
     <div class="header">
@@ -179,6 +185,18 @@
             <td class="right">{{ total_geral | moeda }}</td>
         </tr>
     </table>
+
+    <!-- 🔸 Rodapé fixo com links -->
+    <hr>
+    <p style="font-size: 12px; margin-bottom: 4px;">Assinatura do Cliente: ____________________________________________</p>
+    <p style="font-size: 11px; color: #555;">
+        Aviso: As cores podem sofrer alteração de até 10% devido à calibragem do seu monitor. <br>
+        Não nos responsabilizamos pelas artes enviadas, serão impressas conforme o envio.<br>
+        <a href="https://www.hdroupas.com.br/como-gerar-pdfx1a" target="_blank">Como enviar arte</a> |
+        <a href="https://www.hdroupas.com.br/entregas-e-prazos" target="_blank">Entregas e prazos</a> |
+        <a href="https://www.hdroupas.com.br/contrato-de-prestacao-de-servicos" target="_blank">Contrato de prestação de serviços</a><br>
+        Ao efetuar o pagamento você está aceitando os termos desse contrato.
+    </p>
 
 </body>
 </html>

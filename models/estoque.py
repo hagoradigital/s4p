@@ -5,7 +5,7 @@ from datetime import datetime
 class Estoque(db.Model):
     __tablename__ = "estoque"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     fabrica_id = db.Column(db.Integer, db.ForeignKey('fabrica.id'), nullable=False)
     fabrica = db.relationship('Fabrica', backref=db.backref('estoque_movimentos', lazy=True))
